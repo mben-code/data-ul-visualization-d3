@@ -51,21 +51,28 @@ const update = (data) => {
   // remove exit selection
   rects.exit().remove();
 
+  const t = d3.transition().duration(500);
+
   // update current shapes in dom
   rects.attr('width', x.bandwidth)
-    .attr('height', d => graphHeight - y(d.orders))
     .attr('fill', 'orange')
-    .attr('x', d => x(d.name))
-    .attr('y', d => y(d.orders));
+    .attr('x', d => x(d.name));
+    // .transition(t)
+    //   .attr('height', d => graphHeight - y(d.orders))
+    //   .attr('y', d => y(d.orders));
 
   // append the enter selection to the DOM
   rects.enter()
     .append('rect')
-    .attr('width', x.bandwidth)
-    .attr('height', d => graphHeight - y(d.orders))
+    .attr('height', 0)
     .attr('fill', 'orange')
     .attr('x', d => x(d.name))
-    .attr('y', d => y(d.orders));
+    .attr('y', graphHeight)
+    .merge(rects)
+    .transition(t)
+      .attrTween('width', widthTween)
+      .attr('y', d => y(d.orders))
+      .attr('height', d => graphHeight - y(d.orders));
 
     // call axes
     xAxisGroup.call(xAxis);
@@ -97,4 +104,12 @@ db.collection('dishes').onSnapshot(res => {
 
   update(data);
 
-})
+});
+
+const widthTween = t => {
+  const i = d3.interpolate(0, x.bandwidth());
+
+  return function(t) {
+    return i(t);
+  }
+}
